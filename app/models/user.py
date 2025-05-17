@@ -1,5 +1,6 @@
 
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import Identity
 from app.extensions import db
 from datetime import datetime, timezone
 
@@ -8,13 +9,19 @@ friendships = db.Table(
     db.Column('USER_ID', db.Integer, db.ForeignKey('SC_USERS.USER_ID'), primary_key=True),
     db.Column('FRIEND_ID', db.Integer, db.ForeignKey('SC_USERS.USER_ID'), primary_key=True),
     db.Column('STATUS', db.String(20), default='PENDING'),
-    db.Column('REQUESTED_AT', db.DateTime, default=datetime.now(timezone.utc)),
+    db.Column('REQUESTED_AT', db.DateTime, default=datetime.utcnow),
     db.Column('ACCEPTED_AT', db.DateTime, nullable=True)
 )
+
 class User(db.Model):
     __tablename__ = 'SC_USERS'
+    __table_args__ = {'sqlite_autoincrement': True}
 
-    user_id         = db.Column('USER_ID', db.Integer, primary_key=True)
+    user_id = db.Column(
+        'USER_ID', db.Integer, 
+        db.Identity(start=1, increment=1),  # Oracle identity
+        primary_key=True
+    )
     username        = db.Column('USERNAME', db.String(50), unique=True, nullable=False)
     full_name       = db.Column('FULL_NAME', db.String(100))
     email           = db.Column('EMAIL', db.String(100), unique=True, nullable=False)
@@ -35,4 +42,3 @@ class User(db.Model):
 
     def __repr__(self):
         return f"<User {self.username}>"
-
