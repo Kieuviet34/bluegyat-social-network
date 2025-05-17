@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from app.extensions import db
 
 class Post(db.Model):
@@ -8,7 +8,7 @@ class Post(db.Model):
     user_id    = db.Column('USER_ID', db.Integer, db.ForeignKey('SC_USERS.USER_ID'), nullable=False)
     content    = db.Column('CONTENT', db.Text, nullable=False)
     media_url  = db.Column('MEDIA_URL', db.String(500))
-    created_at = db.Column('CREATED_AT', db.DateTime, default=datetime.now(datetime.timezone.utc))
+    created_at = db.Column('CREATED_AT', db.DateTime, default=datetime.now(timezone.utc))
 
     comments = db.relationship('Comment', backref='post', lazy='dynamic')
     likes    = db.relationship('Like', backref='post', lazy='dynamic')

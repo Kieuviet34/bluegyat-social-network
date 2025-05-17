@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from app.extensions import db
 
 class Comment(db.Model):
@@ -9,7 +9,7 @@ class Comment(db.Model):
     user_id    = db.Column('USER_ID', db.Integer, db.ForeignKey('SC_USERS.USER_ID'), nullable=False)
     content    = db.Column('CONTENT', db.String(1000), nullable=False)
     img_url    = db.Column('IMG_URL', db.String(500))
-    created_at = db.Column('CREATED_AT', db.DateTime, default=datetime.now(datetime.timezone.utc))
+    created_at = db.Column('CREATED_AT', db.DateTime, default=datetime.now(timezone.utc))
 
     def __repr__(self):
         return f"<Comment {self.comment_id} on Post {self.post_id}>"

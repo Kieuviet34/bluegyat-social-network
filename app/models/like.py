@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from app.extensions import db
 
 class Like(db.Model):
@@ -6,7 +6,7 @@ class Like(db.Model):
 
     user_id  = db.Column('USER_ID', db.Integer, db.ForeignKey('SC_USERS.USER_ID'), primary_key=True)
     post_id  = db.Column('POST_ID', db.Integer, db.ForeignKey('POSTS.POST_ID'), primary_key=True)
-    liked_at = db.Column('LIKED_AT', db.DateTime, default=datetime.now(datetime.timezone.utc))
+    liked_at = db.Column('LIKED_AT', db.DateTime, default=datetime.now(timezone.utc))
 
     def __repr__(self):
         return f"<Like {self.user_id}->{self.post_id}>"

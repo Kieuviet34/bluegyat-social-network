@@ -1,14 +1,14 @@
 
 from flask_sqlalchemy import SQLAlchemy
 from app.extensions import db
-from datetime import datetime
+from datetime import datetime, timezone
 
 friendships = db.Table(
     'FRIENDSHIPS',
     db.Column('USER_ID', db.Integer, db.ForeignKey('SC_USERS.USER_ID'), primary_key=True),
     db.Column('FRIEND_ID', db.Integer, db.ForeignKey('SC_USERS.USER_ID'), primary_key=True),
     db.Column('STATUS', db.String(20), default='PENDING'),
-    db.Column('REQUESTED_AT', db.DateTime, default=datetime.now(datetime.timezone.utc)),
+    db.Column('REQUESTED_AT', db.DateTime, default=datetime.now(timezone.utc)),
     db.Column('ACCEPTED_AT', db.DateTime, nullable=True)
 )
 class User(db.Model):
@@ -21,7 +21,7 @@ class User(db.Model):
     password_hash   = db.Column('PASSWORD_HASH', db.String(256), nullable=False)
     profile_img_url = db.Column('PROFILE_IMG_URL', db.String(500))
     cover_img_url   = db.Column('COVER_IMG_URL', db.String(500))
-    created_at      = db.Column('CREATED_AT', db.DateTime, default=datetime.now(datetime.timezone.utc))
+    created_at      = db.Column('CREATED_AT', db.DateTime, default=datetime.now(timezone.utc))
 
     posts    = db.relationship('Post', backref='author', lazy='dynamic')
     comments = db.relationship('Comment', backref='author', lazy='dynamic')

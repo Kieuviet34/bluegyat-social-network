@@ -1,2 +1,5 @@
-_pychache_
-*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+
+migrations/
