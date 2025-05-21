@@ -16,7 +16,7 @@ class Post(db.Model):
     media_url  = db.Column('MEDIA_URL', db.String(500))
     created_at = db.Column('CREATED_AT', db.DateTime, default=datetime.now(timezone.utc))
 
-    comments = db.relationship('Comment', backref='post', lazy='dynamic')
+    comments = db.relationship('Comment', backref='post', lazy='dynamic',order_by="Comment.created_at")
     likes    = db.relationship('Like', backref='post', lazy='dynamic')
 
     def __repr__(self):
