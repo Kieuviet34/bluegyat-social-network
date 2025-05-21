@@ -2,4 +2,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+
 migrations/
+.pytest_cache/
+
+instances/
