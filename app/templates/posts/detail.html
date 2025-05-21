@@ -1,0 +1,65 @@
+<!-- templates/posts/detail.html -->
+{% extends "layout/base.html" %}
+
+{% block title %}Post {{ post.post_id }} - BlueGyat{% endblock %}
+
+{% block content %}
+  {% include "layout/header.html" %}
+
+  <div class="container" style="max-width: 700px;">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">{{ post.author.full_name or post.author.username }}</h5>
+        <p class="card-text">{{ post.content }}</p>
+        {% if post.media_url %}
+          <img src="{{ post.media_url }}" class="img-fluid mt-3" alt="Post media">
+        {% endif %}
+      </div>
+      <div class="card-footer text-muted">
+        Posted on {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}
+      </div>
+    </div>
+
+    <!-- Comments Section -->
+    <h4>Comments ({{ post.comments.count() }})</h4>
+    {% if post.comments %}
+      <ul class="list-group mb-4">
+        {% for comment in comments %}
+        <li class="list-group-item">
+            <strong>{{ comment.author.full_name or comment.author.username }}</strong>
+            <span class="text-muted small">– {{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            <p class="mb-1">{{ comment.content }}</p>
+        </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-muted">No comments yet.</p>
+    {% endif %}
+
+    <!-- Add Comment Form -->
+    {% if current_user.is_authenticated %}
+      <form method="post" action="{{ url_for('comment.add_comment', post_id=post.post_id) }}">
+        <div class="mb-3">
+          <label for="content" class="form-label">Add a comment</label>
+          <textarea
+            class="form-control"
+            id="content"
+            name="content"
+            rows="3"
+            placeholder="Write your comment..."
+            required
+          ></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit Comment</button>
+      </form>
+    {% else %}
+      <p><a href="{{ url_for('auth.login') }}">Log in</a> to leave a comment.</p>
+    {% endif %}
+
+    <div class="mt-4">
+      <a href="{{ url_for('posts.index') }}">&larr; Back to all posts</a>
+    </div>
+  </div>
+
+  {% include "layout/footer.html" %}
+{% endblock %}

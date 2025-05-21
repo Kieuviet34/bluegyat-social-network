@@ -1,0 +1,27 @@
+{% extends "layout/base.html" %}
+{% block title %}{{ user.full_name }}{% endblock %}
+{% block content %}
+  {% include "layout/header.html" %}
+  <div class="container">
+    <h1>{{ user.full_name }}</h1>
+    <p>@{{ user.username }}</p>
+    {% if user.profile_img_url %}
+      <img src="{{ user.profile_img_url }}" class="img-thumbnail" alt="Avatar">
+    {% endif %}
+    <hr>
+    <h3>Posts by {{ user.full_name }}</h3>
+    {% if posts %}
+      {% for post in posts %}
+        <div class="card mb-3">
+          <div class="card-body">
+            <p class="card-text">{{ post.content }}</p>
+            <small class="text-muted">{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p>No posts yet.</p>
+    {% endif %}
+  </div>
+  {% include "layout/footer.html" %}
+{% endblock %}

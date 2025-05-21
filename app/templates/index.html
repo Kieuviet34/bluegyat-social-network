@@ -1,0 +1,37 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Home - BlueGyat{% endblock %}
+
+{% block content %}
+  {% include "layout/header.html" %}
+
+  <div class="container">
+    <h1 class="mb-4">Welcome to BlueGyat!</h1>
+
+    <!-- Ví dụ: Hiển thị danh sách các bài post mới nhất -->
+    {% if posts %}
+      <div class="row">
+        {% for post in posts %}
+          <div class="col-md-6 mb-4">
+            <div class="card h-100">
+              <div class="card-body">
+                <h5 class="card-title">{{ post.author.full_name }}</h5>
+                <p class="card-text">{{ post.content[:150] }}{% if post.content|length > 150 %}…{% endif %}</p>
+                <a href="{{ url_for('posts.view_post', post_id=post.post_id) }}" class="btn btn-primary btn-sm">
+                  Read more
+                </a>
+              </div>
+              {% if post.media_url %}
+              <img src="{{ post.media_url }}" class="card-img-bottom" alt="Post media">
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p>No posts yet. <a href="{{ url_for('posts.create_post') }}">Create the first post</a>!</p>
+    {% endif %}
+  </div>
+
+  {% include "layout/footer.html" %}
+{% endblock %}
