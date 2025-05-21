@@ -1,0 +1,58 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Login - BlueGyat{% endblock %}
+
+{% block content %}
+  {% include "layout/header.html" %}
+
+  <div class="container" style="max-width: 400px;">
+    <h2 class="mt-4 mb-4 text-center">Login to BlueGyat</h2>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="post" action="{{ url_for('auth.login') }}">
+      <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <input
+          type="text" 
+          class="form-control" 
+          id="username" 
+          name="username" 
+          placeholder="Enter your username"
+          required
+        >
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label">Password</label>
+        <input
+          type="password"
+          class="form-control"
+          id="password"
+          name="password"
+          placeholder="Enter your password"
+          required
+        >
+      </div>
+      <div class="d-grid">
+        <button type="submit" class="btn btn-primary">Login</button>
+      </div>
+    </form>
+
+    <div class="mt-3 text-center">
+      <a href="{{ url_for('auth.register') }}">Don't have an account? Register</a><br>
+      <a href="">Forgot password?</a>
+    </div>
+  </div>
+
+  {% include "layout/footer.html" %}
+{% endblock %}
