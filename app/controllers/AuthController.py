@@ -26,8 +26,8 @@ def login():
         user = User.query.filter_by(username=uname).first()
         if user and user.check_password(pwd):
             login_user(user)
-            flash('Logged in successfully.', 'success')
-            return redirect(url_for('main.index'))
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('main.index'))
         flash('Invalid credentials.', 'danger')
     return render_template('auth/login.html')
 
@@ -44,6 +44,11 @@ def register():
         uname = request.form['username']
         email = request.form['email']
         pwd   = request.form['password']
+        pwd2 = request.form.get('password2')
+
+        if pwd != pwd2:
+            flash('Mật khẩu ko khớp', 'warning')
+            return render_template('auth/register.hmtl')
         if User.query.filter_by(username=uname).first():
             flash('Username already taken.', 'warning')
         else:
@@ -51,6 +56,11 @@ def register():
             u.set_password(pwd)
             db.session.add(u)
             db.session.commit()
-            flash('Registration successful. Please log in.', 'success')
-            return redirect(url_for('auth.login'))
+
+            login_user(u)
+            flash('Registration successful! Complete your profile below.', 'success')
+            return render_template('auth/register.html',
+                                   show_profile_modal = True,
+                                   new_user_id=u.user_id)
+        
     return render_template('auth/register.html')
