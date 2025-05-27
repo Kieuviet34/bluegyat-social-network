@@ -1,12 +1,26 @@
 <!-- templates/posts/detail.html -->
 {% extends "layout/base.html" %}
 
-{% block title %}Post {{ post.post_id }} - BlueGyat{% endblock %}
+{% block title %}Post {{ post.post_id }} – BlueGyat{% endblock %}
 
 {% block content %}
   {% include "layout/header.html" %}
 
-  <div class="container" style="max-width: 700px;">
+  <div class="container my-4" style="max-width: 800px;">
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Post card -->
     <div class="card mb-4">
       <div class="card-body">
         <h5 class="card-title">{{ post.author.full_name or post.author.username }}</h5>
@@ -21,24 +35,24 @@
     </div>
 
     <!-- Comments Section -->
-    <h4>Comments ({{ post.comments.count() }})</h4>
-    {% if post.comments %}
+    <h4 class="mb-3">Comments ({{ comments|length }})</h4>
+    {% if comments %}
       <ul class="list-group mb-4">
         {% for comment in comments %}
-        <li class="list-group-item">
+          <li class="list-group-item">
             <strong>{{ comment.author.full_name or comment.author.username }}</strong>
             <span class="text-muted small">– {{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
-            <p class="mb-1">{{ comment.content }}</p>
-        </li>
+            <p class="mb-0 mt-1">{{ comment.content }}</p>
+          </li>
         {% endfor %}
       </ul>
     {% else %}
-      <p class="text-muted">No comments yet.</p>
+      <p class="text-muted mb-4">No comments yet.</p>
     {% endif %}
 
     <!-- Add Comment Form -->
     {% if current_user.is_authenticated %}
-      <form method="post" action="{{ url_for('comment.add_comment', post_id=post.post_id) }}">
+      <form method="post" action="{{ url_for('posts.detail', post_id=post.post_id) }}">
         <div class="mb-3">
           <label for="content" class="form-label">Add a comment</label>
           <textarea
@@ -56,9 +70,11 @@
       <p><a href="{{ url_for('auth.login') }}">Log in</a> to leave a comment.</p>
     {% endif %}
 
+    <!-- Back link -->
     <div class="mt-4">
       <a href="{{ url_for('posts.index') }}">&larr; Back to all posts</a>
     </div>
+
   </div>
 
   {% include "layout/footer.html" %}

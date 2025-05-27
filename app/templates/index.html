@@ -1,37 +1,43 @@
-{% extends "layout/base.html" %}
+{# templates/index.html #}
+{% extends "posts/_post_layout.html" %}
 
-{% block title %}Home - BlueGyat{% endblock %}
+{% block posts_title %}All Posts – BlueGyat{% endblock %}
+{% block posts_header %}All Posts{% endblock %}
 
-{% block content %}
-  {% include "layout/header.html" %}
-
-  <div class="container">
-    <h1 class="mb-4">Welcome to BlueGyat!</h1>
-
-    <!-- Ví dụ: Hiển thị danh sách các bài post mới nhất -->
-    {% if posts %}
-      <div class="row">
-        {% for post in posts %}
-          <div class="col-md-6 mb-4">
-            <div class="card h-100">
-              <div class="card-body">
-                <h5 class="card-title">{{ post.author.full_name }}</h5>
-                <p class="card-text">{{ post.content[:150] }}{% if post.content|length > 150 %}…{% endif %}</p>
-                <a href="{{ url_for('posts.view_post', post_id=post.post_id) }}" class="btn btn-primary btn-sm">
-                  Read more
-                </a>
-              </div>
-              {% if post.media_url %}
-              <img src="{{ post.media_url }}" class="card-img-bottom" alt="Post media">
-              {% endif %}
+{% block posts_content %}
+  {% if posts %}
+    <div class="row">
+      {% for post in posts %}
+        <div class="col-md-6 mb-4">
+          <div class="card h-100">
+            <div class="card-body">
+              <h6 class="text-muted">by {{ post.author.full_name or post.author.username }}</h6>
+              <p class="card-text">{{ post.content[:150] }}{% if post.content|length > 150 %}…{% endif %}</p>
+              <a href="{{ url_for('posts.detail', post_id=post.post_id) }}" class="btn btn-primary btn-sm">Read more</a>
             </div>
+            {% if post.media_url %}
+              <img src="{{ post.media_url }}" class="card-img-bottom img-fluid" alt="Post media">
+            {% endif %}
+            <div class="card-footer text-muted small">{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
           </div>
-        {% endfor %}
-      </div>
-    {% else %}
-      <p>No posts yet. <a href="{{ url_for('posts.create_post') }}">Create the first post</a>!</p>
-    {% endif %}
-  </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-info">
+      No posts found.
+      {% if not q %}
+        <a href="#" data-bs-toggle="modal" data-bs-target="#newPostModal">Create the first post</a>!
+      {% endif %}
+    </div>
+  {% endif %}
 
-  {% include "layout/footer.html" %}
+  {% if suggestions %}
+    <div class="mt-2">
+      Did you mean:
+      {% for name in suggestions %}
+        <a href="{{ url_for('main.index', q=name) }}" class="badge bg-secondary text-white">{{ name }}</a>
+      {% endfor %}
+    </div>
+  {% endif %}
 {% endblock %}
