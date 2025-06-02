@@ -1,34 +1,55 @@
 {# templates/index.html #}
 {% extends "posts/_post_layout.html" %}
 
-{% block posts_title %}All Posts – BlueGyat{% endblock %}
-{% block posts_header %}All Posts{% endblock %}
+{% block posts_title %}Home – BlueGyat{% endblock %}
+{% block posts_header %}Home{% endblock %}
 
 {% block posts_content %}
   {% if posts %}
-    <div class="row">
+    <div class="feed">
       {% for post in posts %}
-        <div class="col-md-6 mb-4">
-          <div class="card h-100">
-            <div class="card-body">
-              <h6 class="text-muted">by {{ post.author.full_name or post.author.username }}</h6>
-              <p class="card-text">{{ post.content[:150] }}{% if post.content|length > 150 %}…{% endif %}</p>
-              <a href="{{ url_for('posts.detail', post_id=post.post_id) }}" class="btn btn-primary btn-sm">Read more</a>
+        <div class="card mb-3" data-post-id="{{ post.post_id }}">
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-2">
+              <div class="flex-grow-1">
+                <a href="{{ url_for('user.profile', user_id=post.author.user_id) }}" class="text-decoration-none text-dark">
+                  <strong>{{ post.author.full_name or post.author.username }}</strong>
+                  <small class="text-muted">@{{ post.author.username }}</small>
+                </a>
+              </div>
+              <small class="text-muted">{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
             </div>
+            <p>{{ post.content }}</p>
             {% if post.media_url %}
-              <img src="{{ post.media_url }}" class="card-img-bottom img-fluid" alt="Post media">
+              <img src="{{ post.media_url }}" class="img-fluid rounded mb-2" alt="media">
             {% endif %}
-            <div class="card-footer text-muted small">{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+          </div>
+          <div class="card-footer d-flex align-items-center">
+            <!-- Like Button -->
+            <form action="{{ url_for('posts.toggle_like', post_id=post.post_id) }}" 
+                  method="POST" 
+                  class="d-inline me-3 like-form">
+              <button type="submit" 
+                      class="btn btn-link text-decoration-none p-0 like-btn">
+                <i class="fas fa-heart {% if current_user in post.likes %}text-danger{% endif %}"></i>
+                <span class="like-count ms-1">{{ post.likes.count() }}</span>
+              </button>
+            </form>
+            
+            <!-- Comment Button -->
+            <button type="button" 
+                    class="btn btn-link text-decoration-none p-0"
+                    onclick="loadPostDetail({{ post.post_id }})">
+              <i class="fas fa-comment"></i>
+              <span class="ms-1 comment-count">{{ post.comments.count() }}</span>
+            </button>
           </div>
         </div>
       {% endfor %}
     </div>
   {% else %}
-    <div class="alert alert-info">
-      No posts found.
-      {% if not q %}
-        <a href="#" data-bs-toggle="modal" data-bs-target="#newPostModal">Create the first post</a>!
-      {% endif %}
+    <div class="text-center text-muted">
+      No posts yet. <a href="#" data-bs-toggle="modal" data-bs-target="#newPostModal">Post something</a>!
     </div>
   {% endif %}
 
@@ -40,4 +61,423 @@
       {% endfor %}
     </div>
   {% endif %}
+
+  <!-- Post Detail Modal -->
+  <div class="modal fade" id="postDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header border-bottom-0">
+          <h5 class="modal-title">Post Detail</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="post-content mb-4"></div>
+          
+          <!-- Comments Section -->
+          <div class="comments-section">
+            <h6 class="mb-3">Comments</h6>
+            <div class="comments-list">
+              <div class="text-center py-3">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading comments...</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- New Comment Form -->
+            <form id="commentForm" class="mt-3">
+              <div class="input-group">
+                <input type="text" class="form-control" placeholder="Write a comment..." name="content" required>
+                <button class="btn btn-primary" type="submit">
+                  <span class="spinner-border spinner-border-sm d-none me-1" role="status"></span>
+                  Send
+                </button>
+              </div>
+              <div class="invalid-feedback"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comment Actions Modal -->
+  <div class="modal fade" id="commentActionsModal" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-body p-0">
+          <div class="list-group list-group-flush">
+            <button class="list-group-item list-group-item-action" onclick="editComment()">Edit Comment</button>
+            <button class="list-group-item list-group-item-action text-danger" onclick="deleteComment()">Delete Comment</button>
+            <button class="list-group-item list-group-item-action" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .like-btn {
+      color: #657786;
+      transition: all 0.2s ease;
+    }
+    .like-btn:hover .fa-heart:not(.text-danger) {
+      color: #e0245e;
+    }
+    .fa-heart, .fa-comment {
+      font-size: 1.2rem;
+    }
+    .fa-comment {
+      color: #657786;
+    }
+    button:hover .fa-comment {
+      color: #1da1f2;
+    }
+    .comment-actions {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .comment-item:hover .comment-actions {
+      opacity: 1;
+    }
+    .modal-content {
+      background-color: var(--bs-body-bg);
+      color: var(--bs-body-color);
+    }
+    .list-group-item {
+      background-color: var(--bs-body-bg);
+      color: var(--bs-body-color);
+    }
+  </style>
+
+  {% block scripts %}
+  {{ super() }}
+  <script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Like functionality
+  document.querySelectorAll('.like-form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const icon = this.querySelector('.fa-heart');
+      
+      fetch(this.action, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(response => response.json())
+      .then(data => {
+        const count = this.querySelector('.like-count');
+        if (data.liked) {
+          icon.classList.add('text-danger');
+        } else {
+          icon.classList.remove('text-danger');
+        }
+        count.textContent = data.count;
+        icon.style.transform = 'scale(1.3)';
+        setTimeout(() => icon.style.transform = 'scale(1)', 200);
+      })
+      .catch(() => {
+        // On error, show failure animation
+        icon.style.transform = 'translateX(3px)';
+        setTimeout(() => icon.style.transform = 'translateX(-3px)', 100);
+        setTimeout(() => icon.style.transform = 'translateX(0)', 200);
+      });
+    });
+  });
+
+  // Comment form handling
+  const commentForm = document.getElementById('commentForm');
+  commentForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const postId = this.dataset.postId;
+    const content = this.content.value.trim();
+    
+    if (!content) {
+      showFormError(this, 'Comment cannot be empty');
+      return;
+    }
+    
+    showSubmitting(this, true);
+    
+    fetch(`/posts/${postId}/comments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({ content })
+    })
+    .then(response => response.json())    .then(data => {
+      if (data.success) {
+        this.content.value = '';
+        hideFormError(this);
+        // Update comments list with the new comment
+        const commentsList = document.querySelector('.comments-list');
+        if (commentsList.querySelector('p.text-muted')) {
+          // If there was "No comments" message, clear it
+          commentsList.innerHTML = '';
+        }
+        
+        // Create new comment element
+        const newComment = document.createElement('div');
+        newComment.className = 'comment-item d-flex align-items-start mb-3';
+        newComment.dataset.commentId = data.comment.id;
+        newComment.innerHTML = `
+          <div class="flex-grow-1">
+            <div class="d-flex align-items-center">
+              <strong class="me-2">${data.comment.author}</strong>
+              <small class="text-muted">${data.comment.created_at}</small>
+            </div>
+            <p class="mb-0">${data.comment.content}</p>
+          </div>
+          ${data.comment.can_modify ? `
+            <button class="btn btn-link text-muted p-0 ms-2 comment-actions" 
+                    onclick="showCommentActions(${data.comment.id})">
+              <i class="fas fa-ellipsis-h"></i>
+            </button>
+          ` : ''}
+        `;
+        
+        // Add the new comment at the end of the list
+        commentsList.appendChild(newComment);
+        
+        // Update comment count without reloading comments
+        updateCommentCount(postId, 1);
+      } else {
+        showFormError(this, data.error || 'Failed to add comment');
+      }
+    })
+    .catch(() => {
+      showFormError(this, 'Failed to add comment. Please try again.');
+    })
+    .finally(() => {
+      showSubmitting(this, false);
+    });
+  });
+});
+
+// Load post detail into modal
+function loadPostDetail(postId) {
+  const modal = document.getElementById('postDetailModal');
+  modal.dataset.postId = postId;
+  
+  // Reset and show loading state
+  modal.querySelector('.post-content').innerHTML = '<div class="text-center"><div class="spinner-border"></div></div>';
+  document.getElementById('commentForm').dataset.postId = postId;
+  new bootstrap.Modal(modal).show();
+  
+  // Load post content
+  fetch(`/posts/${postId}`, {
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(response => response.json())
+  .then(data => {
+    modal.querySelector('.post-content').innerHTML = data.content;
+    loadComments(postId);
+  })
+  .catch(() => {
+    modal.querySelector('.post-content').innerHTML = '<div class="alert alert-danger">Failed to load post</div>';
+  });
+}
+
+// Load comments for a post
+function loadComments(postId) {
+  const commentsList = document.querySelector('.comments-list');
+  commentsList.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary"></div></div>';
+  
+  fetch(`/posts/${postId}/comments`)
+  .then(response => response.json())
+  .then(comments => {
+    if (comments.length === 0) {
+      commentsList.innerHTML = '<p class="text-muted text-center">No comments yet</p>';
+      return;
+    }
+    
+    commentsList.innerHTML = comments.map(comment => `
+      <div class="comment-item d-flex align-items-start mb-3" data-comment-id="${comment.id}">
+        <div class="flex-grow-1">
+          <div class="d-flex align-items-center">
+            <strong class="me-2">${comment.author}</strong>
+            <small class="text-muted">${comment.created_at}</small>
+          </div>
+          <p class="mb-0">${comment.content}</p>
+        </div>
+        ${comment.can_modify ? `
+          <button class="btn btn-link text-muted p-0 ms-2 comment-actions" 
+                  onclick="showCommentActions(${comment.id})">
+            <i class="fas fa-ellipsis-h"></i>
+          </button>
+        ` : ''}
+      </div>
+    `).join('');
+  })
+  .catch(() => {
+    commentsList.innerHTML = '<div class="alert alert-danger">Failed to load comments</div>';
+  });
+}
+
+// Show comment actions modal
+function showCommentActions(commentId) {
+  const modal = document.getElementById('commentActionsModal');
+  modal.dataset.commentId = commentId;
+  new bootstrap.Modal(modal).show();
+}
+
+// Edit comment
+function editComment() {
+  const commentId = document.getElementById('commentActionsModal').dataset.commentId;
+  const commentEl = document.querySelector(`[data-comment-id="${commentId}"]`);
+  const content = commentEl.querySelector('p').textContent;
+  const postId = document.getElementById('postDetailModal').dataset.postId;
+    commentEl.dataset.originalContent = commentEl.innerHTML;
+  commentEl.innerHTML = `
+    <form class="edit-comment-form w-100">
+      <div class="input-group">
+        <input type="text" class="form-control" value="${content}" required>
+        <button class="btn btn-primary" type="submit">
+          <span class="spinner-border spinner-border-sm d-none me-1"></span>
+          Save
+        </button>
+        <button class="btn btn-secondary" type="button" onclick="cancelEditComment(${commentId})">Cancel</button>
+      </div>
+      <div class="invalid-feedback"></div>
+    </form>
+  `;
+
+  document.getElementById('commentActionsModal').querySelector('[data-bs-dismiss="modal"]').click();
+  
+  commentEl.querySelector('form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const newContent = this.querySelector('input').value.trim();
+    
+    if (!newContent) {
+      showFormError(this, 'Comment cannot be empty');
+      return;
+    }
+    
+    showSubmitting(this, true);
+      fetch(`/posts/comments/${commentId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({ 
+        action: 'edit',
+        content: newContent 
+      })
+    })
+    .then(response => response.json())
+    .then(data => {      if (data.success) {
+        // Just update the current comment content without reloading all comments
+        const commentEl = document.querySelector(`[data-comment-id="${commentId}"]`);
+        commentEl.innerHTML = `
+          <div class="flex-grow-1">
+            <div class="d-flex align-items-center">
+              <strong class="me-2">${data.comment.author}</strong>
+              <small class="text-muted">${data.comment.created_at}</small>
+            </div>
+            <p class="mb-0">${data.comment.content}</p>
+          </div>
+          ${data.comment.can_modify ? `
+            <button class="btn btn-link text-muted p-0 ms-2 comment-actions" 
+                    onclick="showCommentActions(${data.comment.id})">
+              <i class="fas fa-ellipsis-h"></i>
+            </button>
+          ` : ''}
+        `;
+        showToast('success', data.message || 'Comment updated successfully');
+      } else {
+        showFormError(this, data.error || 'Failed to update comment');
+      }
+    })
+    .catch(() => {
+      showFormError(this, 'Failed to update comment. Please try again.');
+    })
+    .finally(() => {
+      showSubmitting(this, false);
+    });
+  });
+}
+
+// Cancel comment edit
+function cancelEditComment(commentId) {
+  const commentEl = document.querySelector(`[data-comment-id="${commentId}"]`);
+  if (commentEl && commentEl.dataset.originalContent) {
+    commentEl.innerHTML = commentEl.dataset.originalContent;
+  }
+}
+
+// Delete comment
+function deleteComment() {
+  const commentId = document.getElementById('commentActionsModal').dataset.commentId;
+  const modal = document.getElementById('commentActionsModal');
+  const postId = document.getElementById('postDetailModal').dataset.postId;
+  
+  if (confirm('Are you sure you want to delete this comment?')) {
+    const commentEl = document.querySelector(`[data-comment-id="${commentId}"]`);
+    commentEl.classList.add('opacity-50');
+      fetch(`/posts/comments/${commentId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({ action: 'delete' })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        loadComments(postId);
+        updateCommentCount(postId, -1);
+      } else {
+        commentEl.classList.remove('opacity-50');
+        alert(data.error || 'Failed to delete comment');
+      }
+    })
+    .catch(() => {
+      commentEl.classList.remove('opacity-50');
+      alert('Failed to delete comment. Please try again.');
+    });
+  }
+  
+  modal.querySelector('[data-bs-dismiss="modal"]').click();
+}
+
+// Helper functions
+function showFormError(form, message) {
+  form.classList.add('was-validated');
+  const feedback = form.querySelector('.invalid-feedback');
+  if (feedback) {
+    feedback.textContent = message;
+    feedback.style.display = 'block';
+  }
+}
+
+function hideFormError(form) {
+  form.classList.remove('was-validated');
+  const feedback = form.querySelector('.invalid-feedback');
+  if (feedback) {
+    feedback.style.display = 'none';
+  }
+}
+
+function showSubmitting(form, isSubmitting) {
+  const spinner = form.querySelector('.spinner-border');
+  const submitBtn = form.querySelector('button[type="submit"]');
+  if (spinner && submitBtn) {
+    spinner.classList.toggle('d-none', !isSubmitting);
+    submitBtn.disabled = isSubmitting;
+  }
+}
+
+function updateCommentCount(postId, delta) {
+  const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+  const commentCount = postCard?.querySelector('.comment-count');
+  if (commentCount) {
+    commentCount.textContent = Math.max(0, parseInt(commentCount.textContent) + delta);
+  }
+}
+  </script>
+  {% endblock %}
 {% endblock %}
