@@ -20,28 +20,32 @@ def profile(user_id):
     if request.method == 'POST':
         if user_id != current_user.user_id:
             abort(403)
+        
         # Grab form fields
         full_name = request.form.get('full_name', '').strip()
-        email     = request.form.get('email', '').strip()
-        profile   = request.form.get('profile_img_url', '').strip() or None
-        cover     = request.form.get('cover_img_url', '').strip()   or None
+        email = request.form.get('email', '').strip()
+        profile = request.form.get('profile_img_url', '').strip() or None
+        cover = request.form.get('cover_img_url', '').strip() or None
 
         # Basic validation
         if not full_name or not email:
             flash('Name and email cannot be empty.', 'warning')
         else:
-            user.full_name       = full_name
-            user.email           = email
+            user.full_name = full_name
+            user.email = email
             user.profile_img_url = profile
-            user.cover_img_url   = cover
+            user.cover_img_url = cover
             db.session.commit()
             flash('Profile updated.', 'success')
             return redirect(url_for('user.profile', user_id=user_id))
 
-    # ORDER BY on actual column
+    # GET request - show profile
     posts = (Post.query
-                 .filter_by(user_id=user_id)
-                 .order_by(Post.created_at.desc())
-                 .all())
+             .filter_by(user_id=user_id)
+             .order_by(Post.created_at.desc())
+             .all())
 
-    return render_template('profile.html', user=user, posts=posts)
+    return render_template('profile.html', 
+                         user=user, 
+                         posts=posts, 
+                         is_owner=current_user.user_id == user_id)
