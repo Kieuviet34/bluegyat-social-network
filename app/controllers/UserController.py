@@ -49,3 +49,15 @@ def profile(user_id):
                          user=user, 
                          posts=posts, 
                          is_owner=current_user.user_id == user_id)
+
+@user_bp.route('/search/users')
+def search_users():
+    q = request.args.get('q', '').strip().lower()
+    if not q:
+        return []
+    # Sử dụng trie hoặc query DB để lấy user phù hợp
+    users = User.query.filter(User.username.ilike(f"%{q}%")).limit(10).all()
+    return [{
+        'username': u.username,
+        'avatar_url': u.profile_img_url or '/static/img/default-avatar.png'
+    } for u in users]

@@ -42,3 +42,14 @@ def index():
         suggestions=suggestions,
         q=q or ""
     )
+
+@main_bp.route('/search/users')
+def search_users():
+    q = request.args.get('q', '').strip().lower()
+    if not q:
+        return []
+    users = User.query.filter(User.username.ilike(f"%{q}%")).limit(10).all()
+    return [{
+        'username': u.username,
+        'avatar_url': u.profile_img_url or '/static/img/default-avatar.png'
+    } for u in users]

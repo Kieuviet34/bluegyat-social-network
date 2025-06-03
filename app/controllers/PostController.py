@@ -244,3 +244,30 @@ def manage_post(post_id):
         db.session.rollback()
         current_app.logger.error(f"Error managing post {post_id}: {str(e)}")
         return jsonify({'success': False, 'error': 'Failed to process post action. Please try again.'}), 500
+
+@post_bp.route('/<int:post_id>/delete', methods=['POST'])
+@login_required
+def delete_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if post.user_id != current_user.user_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    # Xóa thủ công các like/comment liên quan trước khi xóa post
+    Comment.query.filter_by(post_id=post_id).delete()
+    Like.query.filter_by(post_id=post_id).delete()
+    db.session.delete(post)
+    db.session.commit()
+    return jsonify({'success': True})
+
+@post_bp.route('/<int:post_id>/edit', methods=['POST'])
+@login_required
+def edit_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if post.user_id != current_user.user_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    data = request.get_json()
+    content = data.get('content', '').strip()
+    if not content:
+        return jsonify({'error': 'Content cannot be empty'}), 400
+    post.content = content
+    db.session.commit()
+    return jsonify({'success': True, 'content': content})
