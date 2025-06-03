@@ -23,14 +23,17 @@
     </div>
 
     <!-- Search bar -->
-    <form class="d-flex mb-4" method="get" action="{{ url_for('main.index') }}">
+    <form class="d-flex mb-4 position-relative" method="get" action="{{ url_for('main.index') }}">
       <input
         class="form-control me-2"
         type="search"
+        id="search-user"
         name="q"
+        autocomplete="off"
         placeholder="Search by username…"
         value="{{ q }}"
       >
+      <div id="search-suggestions" class="dropdown-menu" style="width:100%; top:100%; left:0;"></div>
       <button class="btn btn-outline-primary" type="submit">Search</button>
     </form>
 
