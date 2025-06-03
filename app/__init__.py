@@ -9,6 +9,7 @@ from .controllers.PostController import post_bp
 from .controllers.CommentController import comment_bp
 from datetime import datetime, timezone
 from .utils.recommender import UserNameTrie
+from flask_wtf.csrf import generate_csrf
 
 username_trie = UserNameTrie()
 
@@ -35,5 +36,9 @@ def create_app():
     app.register_blueprint(user_bp)
     app.register_blueprint(comment_bp)
     app.register_blueprint(post_bp, url_prefix='/posts')
+    
+    @app.context_processor
+    def inject_csrf_token():
+        return dict(csrf_token=generate_csrf())
     
     return app
